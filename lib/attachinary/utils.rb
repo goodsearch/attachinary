@@ -29,6 +29,7 @@ module Attachinary
         nil
       when lambda { |e| e.respond_to?(:read) }
         upload_options.merge! resource_type: 'auto'
+        destroy_existing_file(upload_options) if upload_options[:public_id].present?
         process_hash Cloudinary::Uploader.upload(input, upload_options), scope
       when String
         process_json(input, scope)
@@ -60,5 +61,10 @@ module Attachinary
       options
     end
 
+    def self.destroy_existing_file(upload_options)
+      public_id = ::File.join(upload_options[:folder].to_s, upload_options[:public_id])
+      file = Attachinary::File.where(public_id: public_id).first
+      file.destroy if file.present?
+    end
   end
 end
